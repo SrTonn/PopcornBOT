@@ -9,35 +9,31 @@ const DEV = process.env.DEVELOPER_ID
 
 // Encaminha msgs para o grupo de logs do BOT
 let logger = async (ctx) => {
-  try {
+  
+  // Verifica se a requisição não está vindo do desenvolvedor
+  if (ctx.message && ctx.chat.id != DEV && ctx.update.message.from.id != DEV) {
 
-    // Verifica se a requisição não está vindo do desenvolvedor
-    if (ctx.message && ctx.chat.id != DEV && ctx.update.message.from.id != DEV) {
+    // Coleta informações sobre o usuário
+    let userInfo = await ctx.telegram.getChat(ctx.chat.id)
 
-      // Coleta informações sobre o usuário
-      let userInfo = await ctx.telegram.getChat(ctx.chat.id)
+    // Verifica se o usuário tem username
+    if (userInfo.username == null) {
 
-      // Verifica se o usuário tem username
-      if (userInfo.username == null) {
+      // Define o username como traço '-'
+      userInfo.username = '-'
 
-        // Define o username como traço '-'
-        userInfo.username = '-'
+    } else {
 
-      } else {
+      //add @ antes do username
+      userInfo.username = '@'+ userInfo.username
 
-        //add @ antes do username
-        userInfo.username = '@'+ userInfo.username
-
-      }
-
-      //Encaminha msg para o grupo logger
-      await ctx.telegram.forwardMessage(LOGGER_GROUP, ctx.chat.id , ctx.message.message_id ).then(({ message_id }) => {
-          // Responde a msg original encaminhada com as informações do usuário -> ID, NAME e USERNAME caso tenha
-          ctx.telegram.sendMessage(LOGGER_GROUP, `\nUsername: ${userInfo.username}\nName: ${userInfo.first_name}\nID: ${userInfo.id}` , {reply_to_message_id: message_id} )
-      })
     }
-  } catch (error) {
-    console.log(error)
+
+    //Encaminha msg para o grupo logger
+    await ctx.telegram.forwardMessage(LOGGER_GROUP, ctx.chat.id , ctx.message.message_id ).then(({ message_id }) => {
+        // Responde a msg original encaminhada com as informações do usuário -> ID, NAME e USERNAME caso tenha
+        ctx.telegram.sendMessage(LOGGER_GROUP, `\nUsername: ${userInfo.username}\nName: ${userInfo.first_name}\nID: ${userInfo.id}` , {reply_to_message_id: message_id} )
+    })
   }
 }
 

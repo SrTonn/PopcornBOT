@@ -1,0 +1,10 @@
+{
+  "adminList": [
+    {
+      "id": "123456789",
+      "first_name": "Name - optional",
+      "username": "username - optional",
+      "type": "private - optional"
+    }
+  ]
+}

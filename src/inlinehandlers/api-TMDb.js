@@ -1,4 +1,4 @@
-'use strict'
+// 'use strict'
 const axios = require('axios')
 
 const API_TMDB_KEY = process.env.API_TMDB_KEY
@@ -47,7 +47,7 @@ module.exports = bot => {
       let filter = data.filter((item) => item.poster_path != null && item.overview != '')
       // console.log('filter:',filter)
 
-      //Informações a serem gravadas temporariamente no banco de dados
+      //Informações a serem gravadas temporariamente na memória
       //São complementos de dados que não vem na busca por ID
       let resFilter = filter.map((item, index) => {
 
@@ -67,7 +67,8 @@ module.exports = bot => {
             original_language: `${item.original_language}`,
             origin_country: `${String(item.origin_country)}`,
             genre_ids: item.genre_ids,
-            descricao: `${item.overview}`
+            descricao: `${item.overview}`,
+            poster_path: `${item.poster_path}`
           }
       })
 
@@ -150,15 +151,14 @@ module.exports = bot => {
       })
     } else if (nomeBusca.match(/^\d+/i)) {
       let array = nomeBusca.split(" ")
-      let regName = /\[(.*)\]/i //buscar nome traduzido
-      let name = regName.exec(nomeBusca)[1]
-      let regOriName = /\((.*)\)/i //buscar nome original
-      let original_name = regOriName.exec(nomeBusca)[1]
+      // let regName = /\[(.*)\]/i //buscar nome traduzido
+      // // let name = regName.exec(nomeBusca)[1]
+      // let regOriName = /\((.*)\)/i //buscar nome original
+      // // let original_name = regOriName.exec(nomeBusca)[1]
       let tv_id = array[0]
       let season = array[array.length - 1]
       let categoria = 'Serie'
       let numberId = `${array[0]}`
-
       let res = ''
       try {
         // busca da API para SÉRIES
@@ -170,28 +170,32 @@ module.exports = bot => {
       let data = res.data
       let ano = data.air_date
       let descricao = data.overview
-      let linkImg = `${API_TMDB_BASE_IMG}${API_TMDB_TAM}${data.poster_path}`
-      
       let i = info.findIndex(x => x.ID === String(userId))
       
       // busca no banco de dados local p/ complemento de dados
       let _info = info[i].temp.filter(x => x.id_tmdb == numberId)
-      // console.log('info lin144:', _info)
+      let name = _info[i].name
+      let original_name = _info[i].original_name
       
-      // Definindo o idioma de acordo com dado armazenado em _info
-      let idioma = _info[0].idioma
+      // Se a temporada vier sem poster, buscar poster armazenado na memória
+      if (data.poster_path == null) {
+        data.poster_path = _info[i].poster_path
+      }
+      let linkImg = `${API_TMDB_BASE_IMG}${API_TMDB_TAM}${data.poster_path}`
 
-      // console.log('_info[0].idioma',_info[0].idioma)
+      // Definindo o idioma de acordo com dado armazenado em _info
+      let idioma = _info[i].idioma
       
       // sobrescrever 'descricao' caso ela venha vazia
       if (descricao.length < 1) {
-        descricao = _info[0].descricao
+        descricao = _info[i].descricao
       }
-
+      // Se a descrição for maior a 800 caracteres, diminuir até 600 caracteres
       if(descricao.length > 800) {
-        descricao = _info[0].descricao.substr(0, 600) + '...'
+        descricao = _info[i].descricao.substr(0, 600) + '...'
       }
       
+      // Busca de ano do formato 0000-00-00 e substitui para 0000
       if (ano && ano.match(/(\d{4})-\d{2}-\d{2}/mg)) {
         // regex para pegar data completa e substituir pelo ano
         let myRegex = /(\d{4})-\d{2}-\d{2}/
@@ -199,14 +203,13 @@ module.exports = bot => {
       }
 
       // busca nacionalidade para definir se é serie/animacao/anime e se é #Nacional
-      if ((_info[0].original_language == 'pt' || _info[0].original_language == 'pt-BR') && _info[0].origin_country == 'BR') {
+      if ((_info[i].original_language == 'pt' || _info[i].original_language == 'pt-BR') && _info[i].origin_country == 'BR') {
         idioma = 'Nacional'
-          
-      } else if (_info[0].genre_ids.indexOf(16) != -1 && _info[0].original_language == 'ja') {
+      } else if (_info[i].genre_ids.indexOf(16) != -1 && _info[i].original_language == 'ja') {
         categoria = 'Anime'
-      } else if (_info[0].genre_ids.indexOf(16) != -1 && _info[0].original_language != 'ja') {
+      } else if (_info[i].genre_ids.indexOf(16) != -1 && _info[i].original_language != 'ja') {
         categoria = 'Animacao'
-      } else if (_info[0].genre_ids.indexOf(99) != -1) {
+      } else if (_info[i].genre_ids.indexOf(99) != -1) {
         categoria = 'Documentario'
       } else {
         categoria = 'Serie'

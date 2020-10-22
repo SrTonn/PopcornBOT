@@ -1,46 +1,25 @@
 require('dotenv').config()
-// const { Composer } = require('micro-bot') //heroku
 
-const Telegraf = require('telegraf') 
+const Telegraf = require('telegraf')
 const functions = require('./libs/functions')
 const session = require('telegraf/session')
 const bot = new Telegraf(process.env.BOT_TOKEN)
-// const bot = new Composer //heroku
 
 bot.use(session())
 bot.use((ctx, next) => {
   const start = new Date()
   const ms = new Date() - start
-  console.log('Response time: %sms', ms) //tempo de resposta
-  
+  console.log('Response time: %sms', ms) // tempo de resposta
   functions.verificar(ctx, next)
-  // next()
 })
 
-/* bot.on('photo',(ctx, next) => {
-  let cover = new Array()
-  let msgId = ctx.update.message.message_id
-  let photoCap = ctx.update.message.caption
-  let photoId = ctx.update.message.photo[1].file_id
-  let chatId = ctx.chat.id
-
-  res = photoCap.split('\n', 1)
-  console.log(res)
-  
-  padrao = {
-    msgId: msgId,
-    photoCap: photoCap,
-    photoId: photoId,
-    chatId: chatId
-  }
-  cover.push(padrao)
-  
-  // console.log(padrao)
-
+bot.hears('hey', (ctx, next) => {
+  ctx.reply('oi')
   next()
-}) */
+})
 
-bot.hears('hey', ctx => ctx.reply('oi'))
+const updateCommand = require('./src/commands/update')
+updateCommand(bot)
 
 const startCommand = require('./src/commands/start')
 startCommand(bot)
@@ -56,12 +35,6 @@ TMDbQuery(bot)
 
 const apagarAction = require('./src/actions/apagar')
 apagarAction(bot)
-
-const addCommand = require('./src/commands/add')
-addCommand(bot)
-
-const removeCommand = require('./src/commands/remove')
-removeCommand(bot)
 
 const pingHandler = require('./src/handlers/ping')
 pingHandler(bot)
@@ -81,8 +54,8 @@ newpostCommand(bot)
 const newpostAction = require('./src/actions/newpost')
 newpostAction(bot)
 
-const repostCommand = require('./src/commands/repost')
-repostCommand(bot)
+// const repostCommand = require('./src/commands/repost')
+// repostCommand(bot)
 
 bot.on('message', (ctx, next) => {
   console.log('chegou ao launch()')
@@ -90,7 +63,6 @@ bot.on('message', (ctx, next) => {
 })
 
 bot.launch()
-// module.exports = bot //heroku
 
 /* AWS Lambda handler function */
 /* exports.handler = (event, context, callback) => {

@@ -4,13 +4,16 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "aws-sdk": "^2.754.0",
     "axios": "^0.19.2",
     "dotenv": "^8.2.0",
-    "lowdb": "^1.0.0",
+    "dynamodb": "^1.2.1",
     "nodemon": "^2.0.4",
     "telegraf": "^3.38.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^7.8.1"
+  },
   "scripts": {
     "dev": "nodemon --inspect index.js",
     "test": "SET NODE_ENV=development && nodemon -r dotenv/config --inspect index.js dotenv_config_path=.env_testing"

@@ -1,64 +1,65 @@
-const bot_uname = process.env.BOT_UNAME
+const BOT_UNAME = process.env.BOT_UNAME
 
 module.exports = bot => {
-  bot.on(['channel_post','message'], (ctx, next) => {
-  
-    // Definição do comando
-    let command = ['/repost',`/repost${bot_uname}`]
-    
+  bot.on(['channel_post', 'message'], async (ctx, next) => {
+
+    // Definição do comando utilizado
+    let command = ['/repost', `/repost${BOT_UNAME}`]
+    try {
+      var channelConditionArray = ctx.chat.type === 'channel' ?
+        [
+          ctx.update.channel_post,
+          ctx.update.channel_post.text === command[0],
+          ctx.update.channel_post.reply_to_message.video != null ||
+          ctx.update.channel_post.reply_to_message.photo != null
+        ] : [false],
+      privateConditionArray = ctx.chat.type !== 'channel' ?
+        [
+          ctx.chat.type !== 'channel',
+          ctx.update.message.text === command[0] ||
+          ctx.update.message.text === command[1],
+          ctx.update.message.reply_to_message.video != null ||
+          ctx.update.message.reply_to_message.photo != null
+        ] : [false]
+    } catch (error) {
+      console.log('error')
+    }
+
     // Verifica se o texto contém o commando definido acima &&
     // Verifica se o método responder foi utilizado &&
     // Verifica se é post em canal
-    if (ctx.update.channel_post != null && (ctx.update.channel_post.text === command[0] || ctx.update.channel_post.text === command[1]) && (ctx.update.channel_post.reply_to_message.video != null || ctx.update.channel_post.reply_to_message.photo != null)) {
+    if (!channelConditionArray.includes((false))) {
 
-      let file_id = ''
-      let caption = ctx.update.channel_post.reply_to_message.caption
-      let msgId = ctx.update.channel_post.message_id
+      let msgId = ctx.update.channel_post.message_id,
+          caption = ctx.update.channel_post.reply_to_message.caption,
+          file_id = ctx.update.channel_post.reply_to_message.video ?
+                    ctx.update.channel_post.reply_to_message.video.file_id :
+                    ctx.update.channel_post.reply_to_message.photo[1].file_id
 
-      if (!ctx.update.channel_post.reply_to_message.photo) {
-
-        file_id = ctx.update.channel_post.reply_to_message.video.file_id
-        // console.log('é video:',file_id)
-        ctx.replyWithVideo(file_id, {caption: caption})
-        ctx.telegram.deleteMessage(ctx.chat.id, msgId)
-
-      } else if (ctx.update.channel_post.reply_to_message.photo) {
-
-        file_id = ctx.update.channel_post.reply_to_message.photo[1].file_id
-        // console.log('é photo:',file_id)
+      ctx.update.channel_post.reply_to_message.video ?
+        ctx.replyWithVideo(file_id, {caption: caption}) :
         ctx.replyWithPhoto(file_id, {caption: caption})
-        ctx.telegram.deleteMessage(ctx.chat.id, msgId)
-
-      }
+      ctx.telegram.deleteMessage(ctx.chat.id, msgId)
 
     // Verifica se o texto contém o commando definido acima &&
     // Verifica se o método responder foi utilizado &&
     // Verifica se é post em chat privado
     // Verifica se a msg é do tipo 'photo' ou 'video'
-    } else if (ctx.update.message && ctx.chat.type != 'channel' && (ctx.update.message.text == command[0] || ctx.update.message.text == command[1]) && (ctx.update.message.reply_to_message.video || ctx.update.message.reply_to_message.photo)) {
-      console.log('lin 39')
-      
-      let file_id = ''
-      let caption = ctx.message.reply_to_message.caption
-      let msgId = ctx.update.message.message_id
-      
-      // Caso seja vídeo executa esse bloco
-      if (ctx.update.message.reply_to_message.video) {
-          
-        file_id = ctx.update.message.reply_to_message.video.file_id
-        ctx.replyWithVideo(file_id, {caption: caption})
-        ctx.telegram.deleteMessage(ctx.chat.id, msgId)
-          
-      // Caso não seja vídeo executa o bloco abaixo
-      } else {
+    } else if (!privateConditionArray.includes((false))) {
 
-        file_id = ctx.update.message.reply_to_message.photo[1].file_id
-        // console.log('é photo:',file_id)
+      let msgId = ctx.update.message.message_id,
+          caption = ctx.message.reply_to_message.caption,
+          file_id = ctx.update.message.reply_to_message.video ?
+                    ctx.update.message.reply_to_message.video.file_id :
+                    ctx.update.message.reply_to_message.photo[1].file_id
+
+      // Verifica o tipo e envia o comando conforme o resultado da condição
+      ctx.update.message.reply_to_message.video ?
+        ctx.replyWithVideo(file_id, {caption: caption}) :
         ctx.replyWithPhoto(file_id, {caption: caption})
-        ctx.telegram.deleteMessage(ctx.chat.id, msgId)
+      ctx.telegram.deleteMessage(ctx.chat.id, msgId)
 
-      }
     }
-    next() 
+    next()
   })
 }

@@ -1,5 +1,8 @@
+.gitignore
 node_modules
 .env
 .env_testing
 data.json
 data_copy.json
+.eslintrc.json
+practice.js

@@ -1,6 +1,7 @@
+/* eslint-disable max-len */
 const BOT_UNAME = process.env.BOT_UNAME
 
-const helpMessage = 
+const helpMessage =
 `
 /start ou /help Para ver essa mensagem
 /newpost Para criar um post novo para o canal

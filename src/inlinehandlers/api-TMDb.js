@@ -1,4 +1,8 @@
 'use strict'
+
+const {
+  atrGenero
+} = require('../../libs/functions')
 const axios = require('axios')
 
 const API_TMDB_KEY = process.env.API_TMDB_KEY
@@ -10,25 +14,25 @@ var info = new Array()
 
 module.exports = bot => {
   bot.on('inline_query', async (ctx, next) => {
-
     let descricao = '',
-        results = '',
-        busca_leg = ['leg', 'legendado'],
-        userId = ctx.update.inline_query.from.id,
+      results = '',
+      busca_leg = ['leg', 'legendado'],
+      userId = ctx.update.inline_query.from.id,
 
-        // Msg recebida do usuário para efetuar a busca(aceita acentuação)
-        nomeBusca = ctx.inlineQuery.query
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
+      // Msg recebida do usuário para efetuar a busca(aceita acentuação)
+      nomeBusca = ctx.inlineQuery.query
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
 
     // if¹ - Busca de Séries
     // if² - Busca de Séries por temporada
     // if³ - Busca de Filmes
     if (nomeBusca.match(/^s.rie/i)) {
       let idioma = 'Dublado',
-          categoria = 'Serie',
-          array = nomeBusca.split(' ')
-          array.shift()
+        categoria = 'Série',
+        genero = '',
+        array = nomeBusca.split(' ')
+      array.shift()
 
       if (busca_leg.indexOf(array[array.length - 1].toLowerCase()) !== -1) {
         idioma = 'Legendado'
@@ -39,11 +43,12 @@ module.exports = bot => {
       let res = ''
       try {
         // eslint-disable-next-line max-len
-        res = await axios.get(`${API_TMDB_BASEURL}/search/tv/?api_key=`
-                            + `${API_TMDB_KEY}&query=${nomeBusca}&language=pt-BR`)
+        res = await axios.get(`${API_TMDB_BASEURL}/search/tv/?api_key=` +
+          `${API_TMDB_KEY}&query=${nomeBusca}&language=pt-BR`)
 
       } catch (error) {
-        console.log(error)
+
+        // console.log(error)
       }
       let data = res.data.results
 
@@ -56,11 +61,11 @@ module.exports = bot => {
 
         if (idioma === 'Legendado') {
           item.original_language = idioma
-        } else if ((item.original_language === 'pt' || item.original_language === 'pt-BR')
-        && item.origin_country[0] === 'BR') {
+        } else if ((item.original_language === 'pt' || item.original_language === 'pt-BR') &&
+          item.origin_country[0] === 'BR') {
           item.original_language = 'Nacional'
-        } else if ((item.original_language !== 'pt' || item.original_language !== 'pt-BR')
-        && item.origin_country[0] !== 'BR') {
+        } else if ((item.original_language !== 'pt' || item.original_language !== 'pt-BR') &&
+          item.origin_country[0] !== 'BR') {
           item.original_language = 'Dublado'
         }
 
@@ -72,30 +77,39 @@ module.exports = bot => {
           original_language: `${item.original_language}`,
           origin_country: `${item.origin_country}`,
           genre_ids: item.genre_ids,
+          genero: `${genero}`,
           descricao: `${item.overview}`,
           poster_path: `${item.poster_path}`
         }
       })
 
       info.findIndex(x => x.ID === String(userId)) !== -1 ?
-       info = info.filter(x => x.ID !== String(userId)) : null
+        info = info.filter(x => x.ID !== String(userId)) : null
 
-      info.push({ID: `${userId}`, temp: resFilter})
+      info.push({
+        ID: `${userId}`,
+        temp: resFilter
+      })
 
       results = filter.map((item, index) => {
+        genero = ''
         descricao = item.overview
         let ano = item.first_air_date,
-            linkImg = `${API_TMDB_BASE_IMG}${API_TMDB_TAM}${item.poster_path}`
+          linkImg = `${API_TMDB_BASE_IMG}${API_TMDB_TAM}${item.poster_path}`
 
         // Substutui o formato 0000-00-00 por 0000
         if (ano && ano.match(/(\d{4})-\d{2}-\d{2}/)) {
           let myRegex = /(\d{4})-\d{2}-\d{2}/
           ano = ano.replace(myRegex, '$1')
         }
+        console.log('tamanho desc: ', descricao.length)
+        console.log('descricao>>>', descricao)
 
-        // Limite de caracteres na descricao
-        if (descricao.length > 800) {
-          item.overview = item.overview.substr(0, 600) + '...'
+        // Limite de caracteres na descricao da série
+        while (descricao.length > 700 || descricao.match(/(?:Dr|Sr)a?\.$/i)) {
+
+          item.overview = item.overview.substr(0, item.overview.lastIndexOf('. ') + 1)
+          descricao = item.overview
         }
 
         // Regex para localizar dois pontos ":"
@@ -110,11 +124,11 @@ module.exports = bot => {
         // if - Definir se a série é #Nacional
         if (idioma === 'Legendado') {
           item.original_language = idioma
-        } else if ((item.original_language === 'pt' || item.original_language === 'pt-BR')
-        && item.origin_country[0] === 'BR') {
+        } else if ((item.original_language === 'pt' || item.original_language === 'pt-BR') &&
+          item.origin_country[0] === 'BR') {
           item.original_language = 'Nacional'
-        } else if ((item.original_language !== 'pt' || item.original_language !== 'pt-BR')
-        && item.origin_country[0] !== 'BR') {
+        } else if ((item.original_language !== 'pt' || item.original_language !== 'pt-BR') &&
+          item.origin_country[0] !== 'BR') {
           item.original_language = 'Dublado'
         }
 
@@ -123,11 +137,45 @@ module.exports = bot => {
         if (item.genre_ids.indexOf(16) !== -1 && item.original_language === 'ja') {
           categoria = 'Anime'
         } else if (item.genre_ids.indexOf(16) !== -1 && item.original_language !== 'ja') {
-          categoria = 'Animacao'
+          categoria = 'Animação'
         } else if (item.genre_ids.indexOf(99) !== -1) {
-          categoria = 'Documentario'
+          categoria = 'Documentário'
         } else {
-          categoria = 'Serie'
+          categoria = 'Série'
+        }
+        console.log(item.genre_ids)
+
+        // definir os generos das séries
+        if (item.genre_ids.indexOf(10765) !== -1) {
+          item.genre_ids.splice(item.genre_ids.indexOf(10765), 1)
+          item.genre_ids.push(14, 878)
+        }
+        if (item.genre_ids.indexOf(10759) !== -1) {
+          item.genre_ids.splice(item.genre_ids.indexOf(10759), 1)
+          item.genre_ids.push(28, 12)
+        }
+
+        console.log(genero)
+        // eslint-disable-next-line semi-spacing
+        for (let i = 0; i < item.genre_ids.length; i++) {
+          let codigo = item.genre_ids[i]
+          genero += atrGenero(codigo)
+        }
+
+        // remove undefined e organiza as tags por ordem alfabética
+        genero = genero.split(/undefined|\s/i).sort(function (a, b) {
+          return a.localeCompare(b)
+        })
+
+        // Enquanto o array 0 estiver vazio, delete o primeiro array
+        while (genero[0] === '') {
+          genero.shift()
+        }
+        genero = genero.join(' ')
+
+        // Quebra linha após add os generos
+        if (genero.length > 1) {
+          genero += '\n'
         }
 
         // resultado do .map()
@@ -137,64 +185,73 @@ module.exports = bot => {
           photo_url: `${linkImg}`,
           thumb_url: `${linkImg}`,
           caption: `Nome: ${item.name}\nOriginal: ${item.original_name}\n1ª Temporada\n` +
-          `\n#${categoria} #${item.original_language} #y${ano}\n\n` +
-          `Descrição: ${item.overview}\n\n@PopcornBR`,
+            `\n#${categoria} #${item.original_language} #y${ano}\n` +
+            `${genero}\n` +
+            `Descrição: ${item.overview}\n\n@PopcornBR`,
           photo_width: 200,
           photo_height: 300,
           reply_markup: {
             inline_keyboard: [
-              [
-                {text: 'Pesquisar outras temporadas',
-                switch_inline_query_current_chat: `${item.id} [${item.name}] (${item.original_name}) `}
-              ]
+              [{
+                text: 'Pesquisar outras temporadas',
+                switch_inline_query_current_chat: `${item.id} [${item.name}] (${item.original_name}) `
+              }]
             ]
           }
         }
       })
+
     } else if (nomeBusca.match(/^\d+/i)) {
       let array = nomeBusca.split(' '),
-          tv_id = array[0],
-          season = array[array.length - 1],
-          categoria = 'Serie',
-          numberId = `${array[0]}`,
-          res = ''
+        tv_id = array[0],
+        season = array[array.length - 1],
+        categoria = 'Série',
+        numberId = `${array[0]}`,
+        res = ''
       try {
 
         // busca da API para SÉRIES
-        res = await axios.get(`${API_TMDB_BASEURL}/tv/${tv_id}`
-                            + `/season/${season}?api_key=`
-                            + `${API_TMDB_KEY}&language=pt-BR`)
+        res = await axios.get(`${API_TMDB_BASEURL}/tv/${tv_id}` +
+          `/season/${season}?api_key=` +
+          `${API_TMDB_KEY}&language=pt-BR`)
       } catch (error) {
         console.log(error)
       }
+      console.log('resdata>>>', res.data)
 
       let data = res.data,
-          ano = data.air_date,
-          descricao = data.overview,
-          i = info.findIndex(x => x.ID === String(userId))
+        ano = data.air_date,
+        descricao = data.overview,
+        i = info.findIndex(x => x.ID === String(userId))
+      console.log('index>>>', i)
+      console.log('data ow>>>', data.overview)
+      console.log('data test>>>', data.episodes[0].overview)
 
       // busca no banco de dados local p/ complemento de dados
-      let _info = info[i].temp.filter(x => x.id_tmdb === numberId),
-          name = _info[i].name,
-          original_name = _info[i].original_name
+      let _info = await info[i].temp.filter(x => x.id_tmdb === numberId)
+      let name = _info[0].name,
+        original_name = _info[0].original_name,
+        genero = ''
 
       // Se a temporada vier sem poster, buscar poster armazenado na memória
       if (data.poster_path == null) {
-        data.poster_path = _info[i].poster_path
+        data.poster_path = _info[0].poster_path
       }
       let linkImg = `${API_TMDB_BASE_IMG}${API_TMDB_TAM}${data.poster_path}`
 
       // Definindo o idioma de acordo com dado armazenado em _info
-      let idioma = _info[i].idioma
+      let idioma = _info[0].idioma
 
       // sobrescrever 'descricao' caso ela venha vazia
       if (descricao.length < 1) {
-        descricao = _info[i].descricao
+        descricao = _info[0].descricao
       }
 
-      // Se a descrição for maior a 800 caracteres, diminuir até 600 caracteres
-      if (descricao.length > 800) {
-        descricao = _info[i].descricao.substr(0, 600) + '...'
+      // Se a descrição da temporada for maior a 800 caracteres
+      // procura pelo ponto "." anterior no texto e remove tudo após o ponto
+      while (descricao.length > 700 || descricao.match(/(?:Dr|Sr)a?\.$/i)) {
+
+        descricao = descricao.substr(0, descricao.lastIndexOf('. ') + 1)
       }
 
       // Busca de ano do formato 0000-00-00 e substitui para 0000
@@ -205,18 +262,47 @@ module.exports = bot => {
         ano = ano.replace(myRegex, '$1')
       }
 
-      // busca nacionalidade para definir se é serie/animacao/anime e se é #Nacional
-      if ((_info[i].original_language === 'pt' || _info[i].original_language === 'pt-BR')
-      && _info[i].origin_country === 'BR') {
+      // Regex para localizar dois pontos ":"
+      let doisP = /(?<!(Nome|Original)):/img
+
+      // Busca dos ":" para substituir por traço "-"
+      if (name.match(doisP) || original_name.match(doisP)) {
+        name = name.replace(doisP, ' -')
+        original_name = original_name.replace(doisP, ' -')
+      }
+
+      // busca nacionalidade para definir se é série/animacao/anime e se é #Nacional
+      if ((_info[0].original_language === 'pt' || _info[0].original_language === 'pt-BR') &&
+        _info[0].origin_country === 'BR') {
         idioma = 'Nacional'
-      } else if (_info[i].genre_ids.indexOf(16) !== -1 && _info[i].original_language === 'ja') {
+      } else if (_info[0].genre_ids.indexOf(16) !== -1 && _info[0].original_language === 'ja') {
         categoria = 'Anime'
-      } else if (_info[i].genre_ids.indexOf(16) !== -1 && _info[i].original_language !== 'ja') {
-        categoria = 'Animacao'
-      } else if (_info[i].genre_ids.indexOf(99) !== -1) {
-        categoria = 'Documentario'
+      } else if (_info[0].genre_ids.indexOf(16) !== -1 && _info[0].original_language !== 'ja') {
+        categoria = 'Animação'
+      } else if (_info[0].genre_ids.indexOf(99) !== -1) {
+        categoria = 'Documentário'
       } else {
-        categoria = 'Serie'
+        categoria = 'Série'
+      }
+
+      // definir os generos das séries - dentro de temporadas
+      for (let i = 0; i < _info[0].genre_ids.length; i++) {
+        let codigo = _info[0].genre_ids[i]
+        genero += atrGenero(codigo)
+      }
+
+      // remove undefined e organiza as tags por ordem alfabética
+      genero = genero.split(/undefined|\s/i).sort(function (a, b) {
+        return a.localeCompare(b)
+      })
+      while (genero[0] === '') {
+        genero.shift()
+      }
+      genero = genero.join(' ')
+
+      // Quebra linha após add os generos
+      if (genero.length > 1) {
+        genero += '\n'
       }
 
       // Resultado a ser exibido no modo inline dentro do telegram
@@ -226,14 +312,15 @@ module.exports = bot => {
         photo_url: `${linkImg}`,
         thumb_url: `${linkImg}`,
         caption: `Nome: ${name}\nOriginal: ${original_name}\n${season}ª Temporada\n` +
-        `\n#${categoria} #${idioma} #y${ano}\n\n` +
-        `Descrição: ${descricao}\n\n@PopcornBR`,
+          `\n#${categoria} #${idioma} #y${ano}\n` +
+          `${genero}\n` +
+          `Descrição: ${descricao}\n\n@PopcornBR`,
         photo_height: 300,
         photo_width: 200
       }]
     } else {
       let idioma = 'Dublado',
-          categoria = 'Filme'
+        categoria = 'Filme'
 
       // Array para verificar se ultima palavra contém a let busca_leg
       let array = nomeBusca.split(' ')
@@ -251,9 +338,9 @@ module.exports = bot => {
       try {
 
         // Busca da API do TMDb para filmes
-        res = await axios.get(`${API_TMDB_BASEURL}/search/movie`
-                            + `/?api_key=${API_TMDB_KEY}&query=`
-                            + `${nomeBusca}&language=pt-BR`)
+        res = await axios.get(`${API_TMDB_BASEURL}/search/movie` +
+          `/?api_key=${API_TMDB_KEY}&query=` +
+          `${nomeBusca}&language=pt-BR`)
       } catch (error) {
         console.log(error)
       }
@@ -264,9 +351,10 @@ module.exports = bot => {
       let filter = data.filter((item) => item.poster_path != null && item.overview !== '')
 
       results = filter.map((item, index) => {
-        let descricao = item.overview,
-            ano = item.release_date,
-            linkImg = `${API_TMDB_BASE_IMG}${API_TMDB_TAM}${item.poster_path}`
+        let genero = '',
+          descricao = item.overview,
+          ano = item.release_date,
+          linkImg = `${API_TMDB_BASE_IMG}${API_TMDB_TAM}${item.poster_path}`
 
         if (item.release_date.match(/(\d{4})-\d{2}-\d{2}/mg)) {
 
@@ -275,9 +363,29 @@ module.exports = bot => {
           ano = item.release_date.replace(myRegex, '$1')
         }
 
-        // Limite de caracteres na descricao
-        if (descricao.length > 800) {
-          item.overview = item.overview.substr(0, 600) + '...'
+        // Remove quebra de linhas se houver
+        if (descricao.match(/\r/img)) {
+          descricao = descricao.replace(/\r/img, '')
+        }
+
+        // Limite de caracteres na descricao do filme
+        while (descricao.length > 700 || descricao.match(/(?:Dr|Sr)a?\.$/i)) {
+
+          descricao = descricao.substr(0, descricao.lastIndexOf('. ') + 1)
+        }
+
+        // if - Definir se é anime
+        // else if - Definir se é animacao
+        if (item.genre_ids.indexOf(16) !== -1 && item.original_language === 'ja') {
+          categoria = 'Anime'
+        } else if (item.genre_ids.indexOf(16) !== -1 && item.original_language !== 'ja') {
+          categoria = 'Animação'
+        } else if (item.genre_ids.indexOf(99) !== -1) {
+          categoria = 'Documentário'
+        } else if (item.genre_ids.length === 1 && item.genre_ids.indexOf(10402) !== -1) {
+          categoria = 'Show'
+        } else {
+          categoria = 'Filme'
         }
 
         // if Definir se o filme é #Nacional
@@ -289,20 +397,25 @@ module.exports = bot => {
           item.original_language = 'Dublado'
         }
 
-        // if - Definir se é anime
-        // else if - Definir se é animacao
-        if (item.genre_ids.indexOf(16) !== -1 && item.original_language === 'ja') {
-          categoria = 'Anime'
-        } else if (item.genre_ids.indexOf(16) !== -1 && item.original_language !== 'ja') {
-          categoria = 'Animacao'
-        } else if (item.genre_ids.indexOf(99) !== -1) {
-          categoria = 'Documentario'
-        } else if (item.genre_ids.length === 1 && item.genre_ids.indexOf(10402) !== -1) {
-          categoria = 'Show'
-        } /* else if (item.genre_ids.length > 1 && item.genre_ids.indexOf(10402) !== -1) {
-          categoria = 'Musical'
-        }*/ else {
-          categoria = 'Filme'
+        // definir os generos dos filmes
+        // eslint-disable-next-line semi-spacing
+        for (let i = 0; i < item.genre_ids.length; i++) {
+          let codigo = item.genre_ids[i]
+          genero += atrGenero(codigo)
+        }
+
+        // remove undefined e organiza as tags por ordem alfabética
+        genero = genero.split(/undefined|\s/i).sort(function (a, b) {
+          return a.localeCompare(b)
+        })
+        while (genero[0] === '') {
+          genero.shift()
+        }
+        genero = genero.join(' ')
+
+        // Quebra linha após add os generos
+        if (genero.length > 1) {
+          genero += '\n'
         }
 
         // Regex para localizar dois pontos ":"
@@ -318,8 +431,9 @@ module.exports = bot => {
           photo_url: `${linkImg}`,
           thumb_url: `${linkImg}`,
           caption: `Nome: ${item.title}\nOriginal: ${item.original_title}\n` +
-          `\n#${categoria} #${item.original_language} #y${ano}\n\n` +
-          `Descrição: ${item.overview}\n\n@PopcornBR`,
+            `\n#${categoria} #${item.original_language} #y${ano}\n` +
+            `${genero}\n` +
+            `Descrição: ${descricao}\n\n@PopcornBR`,
           photo_width: 200,
           photo_height: 300
         }

@@ -8,6 +8,7 @@ const helpMessage =
 /editar Para editar um post utilizando a função "responder" do telegram (/e/edit)
 /repost Para repostar um conteúdo do formato *imagem* ou *vídeo* em um *grupo* ou *canal*
 /removekeyboard Para remover os botões de teclado do telegram
+/info + ID Para retornar os dados de um usuário
 
 Funções Inline
 @${BOT_UNAME} + nome do filme (para fazer busca de filmes)

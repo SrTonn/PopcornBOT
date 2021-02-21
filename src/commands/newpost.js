@@ -4,7 +4,6 @@ const BOT_UNAME = process.env.BOT_UNAME
 
 module.exports = bot => {
   bot.command('newpost', (ctx) => {
-    // console.log(ctx.chat.type === 'private')
     if (ctx.chat.type === 'private')
     return ctx.reply('Aqui você pode criar postagens relevantes.',
       Markup.inlineKeyboard([
@@ -16,4 +15,3 @@ module.exports = bot => {
 
   })
 }
-

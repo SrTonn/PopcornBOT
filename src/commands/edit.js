@@ -8,7 +8,7 @@ module.exports = bot => {
     const regExBusc = /[12][019]\d{2}(?!p)|720p|1080p|#pedido|#legendado/img
 
     // regex de edicao para remover (ano/qualidade/#pedido/#Legendadado)
-    const regExEdi = /\s?[([]?[12][019]\d{2}(?!p)[)\]]?|\s?720p|\s?1080p|#pedido|#legendado/img
+    const regExEdi = /\s?[([]?[12][019]\d{2}(?!p)[)\]]?|(?:-\s|\s)(?:720p|1080p)|#pedido|#legendado/img
     if (ctx.message.reply_to_message && ctx.message.reply_to_message.caption.match(regExBusc)) {
 
       let descOrig = ctx.message.reply_to_message.caption // descricao original
@@ -17,6 +17,7 @@ module.exports = bot => {
 
       // Nova descricao \/
       let newCap = descOrig.split(regExEdi).join('')
+      newCap = newCap.replace(/\s{2,}/, ' ')
 
       // Responder com Video
       ctx.replyWithVideo(fileId,

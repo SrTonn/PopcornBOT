@@ -22,7 +22,7 @@ module.exports = bot => {
           ctx.update.message.reply_to_message.photo != null
         ] : [false]
     } catch (error) {
-      console.log('error')
+      console.log(error)
     }
 
     // Verifica se o texto contém o commando definido acima &&

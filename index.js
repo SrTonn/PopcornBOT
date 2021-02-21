@@ -5,6 +5,9 @@ const functions = require('./libs/functions')
 const session = require('telegraf/session')
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
+// const CHANNEL_ID = process.env.CHANNEL_ID
+// const ADMINLIST = bot.telegram.getChatAdministrators(CHANNEL_ID)
+
 bot.use(session())
 bot.use((ctx, next) => {
   const start = new Date()
@@ -13,13 +16,9 @@ bot.use((ctx, next) => {
   functions.verificar(ctx, next)
 })
 
-bot.hears('hey', (ctx, next) => {
+bot.hears('hey', (ctx) => {
   ctx.reply('oi')
-  next()
 })
-
-const updateCommand = require('./src/commands/update')
-updateCommand(bot)
 
 const startCommand = require('./src/commands/start')
 startCommand(bot)

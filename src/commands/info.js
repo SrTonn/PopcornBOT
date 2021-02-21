@@ -11,9 +11,7 @@ module.exports = bot => {
         userInfo = await bot.telegram.getChat(newArray)
 
     // Verifica se o usuário tem username
-    userInfo.username == null ?
-      userInfo.username = '-' :
-      userInfo.username = '@' + userInfo.username
+    userInfo.username = userInfo.username == null ? '-' : '@' + userInfo.username
 
     // Responde usuário
     ctx.reply(`ID: ${userInfo.id}\n` +

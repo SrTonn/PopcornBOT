@@ -1,23 +1,21 @@
 require('dotenv').config()
 
 const Telegraf = require('telegraf')
-const functions = require('./libs/functions')
+const { verificar, elapsedTime, getStartedTime } = require('./libs/functions')
 const session = require('telegraf/session')
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
 // const CHANNEL_ID = process.env.CHANNEL_ID
 // const ADMINLIST = bot.telegram.getChatAdministrators(CHANNEL_ID)
-
 bot.use(session())
 bot.use((ctx, next) => {
-  const start = new Date()
-  const ms = new Date() - start
-  console.log('Response time: %sms', ms) // tempo de resposta
-  functions.verificar(ctx, next)
+  getStartedTime()
+  verificar(ctx, next)
+
 })
 
 bot.hears('hey', (ctx) => {
-  ctx.reply('oi')
+  ctx.reply('hey')
 })
 
 const startCommand = require('./src/commands/start')
@@ -53,11 +51,12 @@ newpostCommand(bot)
 const newpostAction = require('./src/actions/newpost')
 newpostAction(bot)
 
-// const repostCommand = require('./src/commands/repost')
-// repostCommand(bot)
+const repostCommand = require('./src/commands/repost')
+repostCommand(bot)
 
 bot.on('message', (ctx, next) => {
   console.log('chegou ao launch()')
+  console.log('Execution time:', elapsedTime() + 'ms.')
   next()
 })
 

@@ -1,5 +1,5 @@
 const Extra = require('telegraf/extra')
-const BOT_UNAME = process.env.BOT_UNAME
+const BOT_UNAME = '@' + process.env.BOT_UNAME
 
 module.exports = bot => {
   bot.command(['edit', 'e', 'editar', `editar${BOT_UNAME}`], ctx => {

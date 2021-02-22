@@ -9,8 +9,6 @@ module.exports = bot => {
     // regex da e edicao
     const regEx = /\s?[([]?[12][019]\d{2}(?!p)[)\]]?|\s?720p|\s?1080p/img
 
-    console.log(CHANNEL_LIST[0])
-    console.log(typeof(ctx.chat.id))
     if (((CHANNEL_LIST.indexOf(ctx.chat.id) !== -1)
       && ctx.update.edited_channel_post == null)
       && ctx.update.channel_post.forward_date == null

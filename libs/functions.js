@@ -1,4 +1,5 @@
-// const bot = new Telegraf(process.env.BOT_TOKEN)
+const {performance} = require('perf_hooks')
+
 const LOGGER_GROUP = +process.env.LOGGER_GROUP
 const DEV = +process.env.DEVELOPER_ID
 const CHANNEL_ID = process.env.CHANNEL_ID
@@ -12,7 +13,6 @@ let logger = async (ctx) => {
 
     // Coleta informações sobre o usuário
     let userInfo = await ctx.telegram.getChat(ctx.chat.id)
-    console.log(userInfo)
 
     // Verifica se o usuário tem username
     userInfo.username = userInfo.username == null ? 'N/A' : '@' + userInfo.username
@@ -45,7 +45,7 @@ let verificar = async (ctx, next) => {
               myChannels.indexOf(ctx.chat.id + '') !== -1 ||
               (ctx.inline_query == null &&
               ctx.chat &&
-              dados.findIndex(a => a.user.id === ctx.from.id) !== -1)
+              (dados.findIndex(a => a.user.id === ctx.chat.id || ctx.from.id) !== -1))
     ) {
 
     next()
@@ -57,7 +57,7 @@ let verificar = async (ctx, next) => {
     next()
 
     // Modo geral para usuários negados
-  } else if (ctx.inline_query == null && ctx.update.chosen_inline_result == null) {
+  } else if (ctx.inline_query == null && ctx.update.chosen_inline_result == null && ctx.from.id !== 777000) {
 
     logger(ctx)
     console.log('Usuário sem permissão. ' + ctx.from.id)
@@ -184,6 +184,25 @@ let atrGenero = (codigo, genero) => {
   return genero
 }
 
+var startTime
+let getStartedTime = () => {
+  startTime = performance.now()
+}
+
+let elapsedTime = () => {
+  let start = startTime
+  var end = performance.now()
+
+  // console.log(`Execution time: ${end - start} ms`)
+  return `${end - start}`
+}
+
+function millisToMinutesAndSeconds(millis) {
+  var minutes = Math.floor(millis / 60000)
+  var seconds = ((millis % 60000) / 1000).toFixed(0)
+  return minutes + ':' + (seconds < 10 ? '0' : '') + seconds
+}
+
 // Exporta as funções
 module.exports = {
   logger,
@@ -191,5 +210,8 @@ module.exports = {
   verificar,
   compareValues,
   getRandomInt,
-  atrGenero
+  atrGenero,
+  elapsedTime,
+  getStartedTime,
+  millisToMinutesAndSeconds
 }

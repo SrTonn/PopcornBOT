@@ -64,7 +64,6 @@ module.exports = bot => {
         }
       posts.push(padrao)
 
-      // console.log('log push posts >>', posts)
       if (posts.filter(x => x.chatId === ctx.chat.id).length === 21) {
         ctx.reply(
           'Alerta! Número alto de posts detectado, modo seguro(lento) ativado!'

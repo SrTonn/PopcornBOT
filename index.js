@@ -1,21 +1,14 @@
+'use strict'
 require('dotenv').config()
-
-const Telegraf = require('telegraf')
 const { verificar, elapsedTime, getStartedTime } = require('./libs/functions')
+const Telegraf = require('telegraf')
 const session = require('telegraf/session')
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
-// const CHANNEL_ID = process.env.CHANNEL_ID
-// const ADMINLIST = bot.telegram.getChatAdministrators(CHANNEL_ID)
 bot.use(session())
 bot.use((ctx, next) => {
   getStartedTime()
   verificar(ctx, next)
-
-})
-
-bot.hears('hey', (ctx) => {
-  ctx.reply('hey')
 })
 
 const startCommand = require('./src/commands/start')
@@ -36,14 +29,17 @@ apagarAction(bot)
 const pingHandler = require('./src/handlers/ping')
 pingHandler(bot)
 
-const autoeditHandler = require('./src/handlers/autoedit-ch-post')
+const autoeditHandler = require('./src/handlers/autoEditChannelPost')
 autoeditHandler(bot)
 
 const answerHandler = require('./src/handlers/replylogger')
 answerHandler(bot)
 
-const removeKeyboardHandler = require('./src/handlers/remove-keyboard')
-removeKeyboardHandler(bot)
+const deleteSystemMessageHandler = require('./src/handlers/deleteSystemMessage')
+deleteSystemMessageHandler(bot)
+
+const removeKeyboardCommand = require('./src/handlers/remove-keyboard')
+removeKeyboardCommand(bot)
 
 const newpostCommand = require('./src/commands/newpost')
 newpostCommand(bot)
@@ -61,14 +57,3 @@ bot.on('message', (ctx, next) => {
 })
 
 bot.launch()
-
-/* AWS Lambda handler function */
-/* exports.handler = (event, context, callback) => {
-  const tmp = JSON.parse(event.body); // get data passed to us
-  bot.handleUpdate(tmp); // make Telegraf process that data
-  return callback(null, { // return something for webhook, so it doesn't try to send same stuff again
-    statusCode: 200,
-    body: '',
-  });
-}; */
-

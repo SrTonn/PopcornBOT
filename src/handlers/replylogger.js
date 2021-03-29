@@ -32,56 +32,56 @@ module.exports = bot => {
 
       // Switch para verificar o tipo da mensagem e responder o usuário
       switch (ctx.updateSubTypes[0].toString()) {
-        case 'dice':
-          if (ctx.message.dice && ctx.message.dice.emoji === '🏀') {
-            bot.telegram.sendDice(userId, {
-              emoji: '🏀'
-            })
-          } else if (ctx.message.dice && ctx.message.dice.emoji === '🎲') {
-            bot.telegram.sendDice(userId, {
-              emoji: '🎲'
-            })
-          } else if (ctx.message.dice && ctx.message.dice.emoji === '🎯') {
-            bot.telegram.sendDice(userId, {
-              emoji: '🎯'
-            })
-          }
-          break
-        case 'text':
-          bot.telegram.sendMessage(userId, msg)
-          break
-        case 'video':
-          let vidId = ctx.message.video.file_id
-          bot.telegram.sendVideo(userId, vidId, {
-            caption: descricao
+      case 'dice':
+        if (ctx.message.dice && ctx.message.dice.emoji === '🏀') {
+          bot.telegram.sendDice(userId, {
+            emoji: '🏀'
           })
-          break
-        case 'photo':
-          let photoId = ctx.message.photo[2].file_id
-          bot.telegram.sendPhoto(userId, photoId, {
-            caption: descricao
+        } else if (ctx.message.dice && ctx.message.dice.emoji === '🎲') {
+          bot.telegram.sendDice(userId, {
+            emoji: '🎲'
           })
-          break
-        case 'sticker':
-          let stickerId = ctx.message.sticker.file_id
-          bot.telegram.sendSticker(userId, stickerId)
-          break
-        case 'voice':
-          let voiceId = ctx.message.voice.file_id
-          bot.telegram.sendVoice(userId, voiceId)
-          break
-        case 'audio':
-          let audioId = ctx.message.audio.file_id
-          bot.telegram.sendAudio(userId, audioId, {
-            caption: descricao
+        } else if (ctx.message.dice && ctx.message.dice.emoji === '🎯') {
+          bot.telegram.sendDice(userId, {
+            emoji: '🎯'
           })
-          break
-        case 'animation':
-          let gifId = ctx.message.animation.file_id
-          bot.telegram.sendAnimation(userId, gifId)
-          break
-        default:
-          break
+        }
+        break
+      case 'text':
+        bot.telegram.sendMessage(userId, msg)
+        break
+      case 'video':
+        let vidId = ctx.message.video.file_id
+        bot.telegram.sendVideo(userId, vidId, {
+          caption: descricao
+        })
+        break
+      case 'photo':
+        let photoId = ctx.message.photo[2].file_id
+        bot.telegram.sendPhoto(userId, photoId, {
+          caption: descricao
+        })
+        break
+      case 'sticker':
+        let stickerId = ctx.message.sticker.file_id
+        bot.telegram.sendSticker(userId, stickerId)
+        break
+      case 'voice':
+        let voiceId = ctx.message.voice.file_id
+        bot.telegram.sendVoice(userId, voiceId)
+        break
+      case 'audio':
+        let audioId = ctx.message.audio.file_id
+        bot.telegram.sendAudio(userId, audioId, {
+          caption: descricao
+        })
+        break
+      case 'animation':
+        let gifId = ctx.message.animation.file_id
+        bot.telegram.sendAnimation(userId, gifId)
+        break
+      default:
+        break
       }
     }
     next()

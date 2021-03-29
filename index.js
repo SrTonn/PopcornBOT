@@ -1,6 +1,6 @@
 'use strict'
 require('dotenv').config()
-const { verificar, elapsedTime, getStartedTime } = require('./libs/functions')
+const { verificar, elapsedTime, getStartedTime } = require('./src/functions/functions')
 const Telegraf = require('telegraf')
 const session = require('telegraf/session')
 const bot = new Telegraf(process.env.BOT_TOKEN)
@@ -38,7 +38,7 @@ answerHandler(bot)
 const deleteSystemMessageHandler = require('./src/handlers/deleteSystemMessage')
 deleteSystemMessageHandler(bot)
 
-const removeKeyboardCommand = require('./src/handlers/remove-keyboard')
+const removeKeyboardCommand = require('./src/commands/remove-keyboard')
 removeKeyboardCommand(bot)
 
 const newpostCommand = require('./src/commands/newpost')

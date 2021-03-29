@@ -1,4 +1,4 @@
-const { elapsedTime, millisToMinutesAndSeconds } = require('../../libs/functions')
+const { elapsedTime, millisToMinutesAndSeconds } = require('../functions/functions')
 
 module.exports = bot => {
   bot.hears(/^p(i|o)ng$/i, ctx => {

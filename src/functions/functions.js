@@ -2,8 +2,8 @@ const {performance} = require('perf_hooks')
 
 const LOGGER_GROUP = +process.env.LOGGER_GROUP
 const DEV = +process.env.DEVELOPER_ID
-const CHANNEL_ID = process.env.CHANNEL_ID
-const myChannels = process.env.CHANNEL_LIST
+const CHANNEL_ID = +process.env.CHANNEL_ID
+const CHANNEL_LIST = process.env.CHANNEL_LIST
 
 // Encaminha msgs para o grupo de logs do BOT
 let logger = async (ctx) => {
@@ -42,12 +42,12 @@ let verificar = async (ctx, next) => {
 
     // modo geral - usuários, grupos e canais
   } else if (
-              myChannels.indexOf(ctx.chat.id + '') !== -1 ||
-              (ctx.inline_query == null &&
-              ctx.chat &&
-              (dados.findIndex(a => a.user.id === ctx.chat.id || ctx.from.id) !== -1))
-    ) {
-
+    ctx.chat.id === CHANNEL_ID ||
+               CHANNEL_LIST.indexOf(ctx.chat.id + '') !== -1 ||
+              (!ctx.inline_query && ctx.chat &&
+              (dados.findIndex(a => a.user.id === ctx.chat.id) !== -1 ||
+               dados.findIndex(a => a.user.id === ctx.from.id) !== -1))
+  ) {
     next()
 
     // click em botoes - usuarios
@@ -57,10 +57,8 @@ let verificar = async (ctx, next) => {
     next()
 
     // Modo geral para usuários negados
-  } else if (ctx.inline_query == null && ctx.update.chosen_inline_result == null && ctx.from.id !== 777000) {
-
+  } else if (!ctx.inline_query && !ctx.update.chosen_inline_result && ctx.from.id !== 777000) {
     logger(ctx)
-    console.log('Usuário sem permissão. ' + ctx.from.id)
   }
 }
 
@@ -110,76 +108,76 @@ let getRandomInt = (min, max) => {
 // Atribuir Genero
 let atrGenero = (codigo, genero) => {
   switch (codigo) {
-    case 28:
-      genero = '#Ação '
-      break
+  case 28:
+    genero = '#Ação '
+    break
 
-    case 12:
-      genero = '#Aventura '
-      break
+  case 12:
+    genero = '#Aventura '
+    break
 
-    case 35:
-      genero = '#Comédia '
-      break
+  case 35:
+    genero = '#Comédia '
+    break
 
-    case 80:
-      genero = '#Crime '
-      break
+  case 80:
+    genero = '#Crime '
+    break
 
-    case 18:
-      genero = '#Drama '
-      break
+  case 18:
+    genero = '#Drama '
+    break
 
-    case 10751:
-      genero = '#Família '
-      break
+  case 10751:
+    genero = '#Família '
+    break
 
-    case 14:
-      genero = '#Fantasia '
-      break
+  case 14:
+    genero = '#Fantasia '
+    break
 
-    case 37:
-      genero = '#Faroeste '
-      break
+  case 37:
+    genero = '#Faroeste '
+    break
 
-    case 10752:
-      genero = '#Guerra '
-      break
+  case 10752:
+    genero = '#Guerra '
+    break
 
-    case 10762:
-      genero = '#Kids '
-      break
+  case 10762:
+    genero = '#Kids '
+    break
 
-    case 9648:
-      genero = '#Mistério '
-      break
+  case 9648:
+    genero = '#Mistério '
+    break
 
-    case 10402:
-      genero = '#Música '
-      break
+  case 10402:
+    genero = '#Música '
+    break
 
-    case 878:
-      genero = '#Scifi '
-      break
+  case 878:
+    genero = '#Scifi '
+    break
 
-    case 53:
-      genero = '#Suspense '
-      break
+  case 53:
+    genero = '#Suspense '
+    break
 
-    case 10764:
-      genero = '#Reality '
-      break
+  case 10764:
+    genero = '#Reality '
+    break
 
-    case 10749:
-      genero = '#Romance '
-      break
+  case 10749:
+    genero = '#Romance '
+    break
 
-    case 27:
-      genero = '#Terror '
-      break
+  case 27:
+    genero = '#Terror '
+    break
 
-    default:
-      break
+  default:
+    break
   }
   return genero
 }
@@ -197,7 +195,7 @@ let elapsedTime = () => {
   return `${end - start}`
 }
 
-function millisToMinutesAndSeconds(millis) {
+let millisToMinutesAndSeconds = (millis) => {
   var minutes = Math.floor(millis / 60000)
   var seconds = ((millis % 60000) / 1000).toFixed(0)
   return minutes + ':' + (seconds < 10 ? '0' : '') + seconds

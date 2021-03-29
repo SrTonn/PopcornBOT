@@ -2,7 +2,7 @@
 
 const {
   atrGenero
-} = require('../../libs/functions')
+} = require('../functions/functions')
 const axios = require('axios')
 
 const API_TMDB_KEY = process.env.API_TMDB_KEY

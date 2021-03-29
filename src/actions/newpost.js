@@ -5,7 +5,7 @@ const Scene = require('telegraf/scenes/base')
 const Stage = require('telegraf/stage')
 const {leave} = Stage
 
-const { sleep, compareValues, getRandomInt } = require('../../libs/functions')
+const { sleep, compareValues, getRandomInt } = require('../functions/functions')
 
 // const { optional } = require('telegraf/scenes/base')
 const stage = new Stage()

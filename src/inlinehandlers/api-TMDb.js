@@ -14,13 +14,14 @@ var info = new Array()
 
 module.exports = bot => {
   bot.on('inline_query', async (ctx, next) => {
-    let descricao = '',
-      results = '',
-      busca_leg = ['leg', 'legendado'],
-      userId = ctx.update.inline_query.from.id,
+    let descricao = ''
+    let results = ''
+    let busca_leg = ['leg', 'legendado']
+    let userId = ctx.update.inline_query.from.id
+    let lowQuality = false
 
-      // Msg recebida do usuário para efetuar a busca(aceita acentuação)
-      nomeBusca = ctx.inlineQuery.query
+    // Msg recebida do usuário para efetuar a busca(aceita acentuação)
+    let nomeBusca = ctx.inlineQuery.query
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
 
@@ -28,17 +29,28 @@ module.exports = bot => {
     // if² - Busca de Séries por temporada
     // if³ - Busca de Filmes
     if (nomeBusca.match(/^s.rie/i)) {
-      let idioma = 'Dublado',
-        categoria = 'Série',
-        genero = '',
-        array = nomeBusca.split(' ')
+      let idioma = 'Dublado'
+      let categoria = 'Série'
+      let genero = ''
+      let array = nomeBusca.split(' ')
       array.shift()
 
-      if (busca_leg.indexOf(array[array.length - 1].toLowerCase()) !== -1) {
-        idioma = 'Legendado'
-        array.pop()
-      }
-      nomeBusca = array.join(' ')
+      // Verificando a última palavra do array
+      let {
+        legendado,
+        newLowQuality,
+        newArray
+      } = checkIfLastWordIsLegOrLow(busca_leg, array, 'low')
+
+      // Define se a série é Legendada ou dublada
+      idioma = legendado ? 'Legendado' : idioma
+
+      // Define a qualidade da imagem a ser exibida na resposta da Query do telegram
+      lowQuality = newLowQuality
+
+      // Retornando resultado para a let nomeBusca
+      newArray = newArray || array
+      nomeBusca = newArray.join(' ').replace(/\s/g, '%20')
 
       let res = ''
       try {
@@ -47,25 +59,35 @@ module.exports = bot => {
           `${API_TMDB_KEY}&query=${nomeBusca}&language=pt-BR`)
 
       } catch (error) {
-
         // console.log(error)
       }
+
       let data = res.data.results
 
+      let filter = data.filter((item) => !!item.poster_path &&
+        item.overview)
       // Filtro para evitar posts sem link da img e sem descrição vindas da API
-      let filter = data.filter((item) => item.poster_path != null && item.overview !== '')
-
+      // let filter = data.filter((item) => !!item.poster_path &&
+      //   item.overview !== '')
+      console.log('=>', filter)
       // Informações a serem gravadas temporariamente na memória
       // São complementos de dados que não vem na busca por ID
       let resFilter = filter.map((item) => {
 
         if (idioma === 'Legendado') {
+
           item.original_language = idioma
-        } else if ((item.original_language === 'pt' || item.original_language === 'pt-BR') &&
-          item.origin_country[0] === 'BR') {
+        } else if ((item.original_language === 'pt'
+                 || item.original_language === 'pt-BR')
+                 && item.origin_country[0] === 'BR'
+        ) {
+
           item.original_language = 'Nacional'
-        } else if ((item.original_language !== 'pt' || item.original_language !== 'pt-BR') &&
-          item.origin_country[0] !== 'BR') {
+        } else if ((item.original_language !== 'pt'
+                 || item.original_language !== 'pt-BR')
+                 && item.origin_country[0] !== 'BR'
+        ) {
+
           item.original_language = 'Dublado'
         }
 
@@ -102,8 +124,6 @@ module.exports = bot => {
           let myRegex = /(\d{4})-\d{2}-\d{2}/
           ano = ano.replace(myRegex, '$1')
         }
-        console.log('tamanho desc: ', descricao.length)
-        console.log('descricao>>>', descricao)
 
         // Limite de caracteres na descricao da série
         while (descricao.length > 700 || descricao.match(/(?:Dr|Sr)a?\.$/i)) {
@@ -134,28 +154,26 @@ module.exports = bot => {
 
         // if - Definir se é anime
         // else if - Definir se é animacao
-        if (item.genre_ids.indexOf(16) !== -1 && item.original_language === 'ja') {
+        if (item.genre_ids.includes(16) && item.original_language === 'ja') {
           categoria = 'Anime'
-        } else if (item.genre_ids.indexOf(16) !== -1 && item.original_language !== 'ja') {
+        } else if (item.genre_ids.includes(16) && item.original_language !== 'ja') {
           categoria = 'Animação'
-        } else if (item.genre_ids.indexOf(99) !== -1) {
+        } else if (item.genre_ids.includes(99)) {
           categoria = 'Documentário'
         } else {
           categoria = 'Série'
         }
-        console.log(item.genre_ids)
 
         // definir os generos das séries
-        if (item.genre_ids.indexOf(10765) !== -1) {
-          item.genre_ids.splice(item.genre_ids.indexOf(10765), 1)
+        if (item.genre_ids.includes(10765)) {
+          item.genre_ids.splice(item.genre_ids.includes(10765), 1)
           item.genre_ids.push(14, 878)
         }
-        if (item.genre_ids.indexOf(10759) !== -1) {
-          item.genre_ids.splice(item.genre_ids.indexOf(10759), 1)
+        if (item.genre_ids.includes(10759)) {
+          item.genre_ids.splice(item.genre_ids.includes(10759), 1)
           item.genre_ids.push(28, 12)
         }
 
-        console.log(genero)
         // eslint-disable-next-line semi-spacing
         for (let i = 0; i < item.genre_ids.length; i++) {
           let codigo = item.genre_ids[i]
@@ -194,38 +212,34 @@ module.exports = bot => {
             inline_keyboard: [
               [{
                 text: 'Pesquisar outras temporadas',
-                switch_inline_query_current_chat: `${item.id} [${item.name}] (${item.original_name}) `
+                switch_inline_query_current_chat: `ID${item.id} [${item.name}] (${item.original_name}) `
               }]
             ]
           }
         }
       })
 
-    } else if (nomeBusca.match(/^\d+/i)) {
-      let array = nomeBusca.split(' '),
-        tv_id = array[0],
-        season = array[array.length - 1],
-        categoria = 'Série',
-        numberId = `${array[0]}`,
-        res = ''
-      try {
+    } else if (nomeBusca.match(/^ID\d+\d+/i)) {
+      let array = nomeBusca.split(' ')
+      let tv_id = array[0].slice(2)
+      let season = array[array.length - 1]
+      let categoria = 'Série'
+      let numberId = array[0].slice(2)
+      let res = ''
 
+      try {
         // busca da API para SÉRIES
         res = await axios.get(`${API_TMDB_BASEURL}/tv/${tv_id}` +
           `/season/${season}?api_key=` +
           `${API_TMDB_KEY}&language=pt-BR`)
       } catch (error) {
-        console.log(error)
+        // console.log(error)
       }
-      console.log('resdata>>>', res.data)
 
-      let data = res.data,
-        ano = data.air_date,
-        descricao = data.overview,
-        i = info.findIndex(x => x.ID === String(userId))
-      console.log('index>>>', i)
-      console.log('data ow>>>', data.overview)
-      console.log('data test>>>', data.episodes[0].overview)
+      let data = res.data
+      let ano = data.air_date
+      let descricao = data.overview
+      let i = info.findIndex(x => x.ID === String(userId))
 
       // busca no banco de dados local p/ complemento de dados
       let _info = await info[i].temp.filter(x => x.id_tmdb === numberId)
@@ -234,7 +248,7 @@ module.exports = bot => {
         genero = ''
 
       // Se a temporada vier sem poster, buscar poster armazenado na memória
-      if (data.poster_path == null) {
+      if (!data.poster_path) {
         data.poster_path = _info[0].poster_path
       }
       let linkImg = `${API_TMDB_BASE_IMG}${API_TMDB_TAM}${data.poster_path}`
@@ -275,11 +289,11 @@ module.exports = bot => {
       if ((_info[0].original_language === 'pt' || _info[0].original_language === 'pt-BR') &&
         _info[0].origin_country === 'BR') {
         idioma = 'Nacional'
-      } else if (_info[0].genre_ids.indexOf(16) !== -1 && _info[0].original_language === 'ja') {
+      } else if (_info[0].genre_ids.includes(16) && _info[0].original_language === 'ja') {
         categoria = 'Anime'
-      } else if (_info[0].genre_ids.indexOf(16) !== -1 && _info[0].original_language !== 'ja') {
+      } else if (_info[0].genre_ids.includes(16) && _info[0].original_language !== 'ja') {
         categoria = 'Animação'
-      } else if (_info[0].genre_ids.indexOf(99) !== -1) {
+      } else if (_info[0].genre_ids.includes(99)) {
         categoria = 'Documentário'
       } else {
         categoria = 'Série'
@@ -319,36 +333,42 @@ module.exports = bot => {
         photo_width: 200
       }]
     } else {
-      let idioma = 'Dublado',
-        categoria = 'Filme'
+      let idioma = 'Dublado'
+      let categoria = 'Filme'
+      let res = ''
 
       // Array para verificar se ultima palavra contém a let busca_leg
       let array = nomeBusca.split(' ')
 
       // Verificando a última palavra do array
-      if (busca_leg.indexOf(array[array.length - 1].toLowerCase()) !== -1) {
-        idioma = 'Legendado'
-        array.pop()
-      }
+      let {
+        legendado,
+        newLowQuality,
+        newArray
+      } = checkIfLastWordIsLegOrLow(busca_leg, array, 'low')
+
+      // Define se a série é Legendada ou dublada
+      idioma = legendado ? 'Legendado' : idioma
+
+      // Define a qualidade da imagem a ser exibida na resposta da Query do telegram
+      lowQuality = newLowQuality
 
       // Retornando resultado para a let nomeBusca
-      nomeBusca = array.join(' ')
+      newArray = newArray || array
+      nomeBusca = newArray.join(' ').replace(/\s/g, '%20')
 
-      let res = ''
-      try {
+      let data = ''
+      // Busca da API do TMDb para filmes
+      res = await axios.get(
+        `${API_TMDB_BASEURL}/search/movie` +
+        `/?api_key=${API_TMDB_KEY}&query=` +
+        `${nomeBusca}&language=pt-BR`
+      )
 
-        // Busca da API do TMDb para filmes
-        res = await axios.get(`${API_TMDB_BASEURL}/search/movie` +
-          `/?api_key=${API_TMDB_KEY}&query=` +
-          `${nomeBusca}&language=pt-BR`)
-      } catch (error) {
-        console.log(error)
-      }
-
-      let data = res.data.results
+      data = res.data.results
 
       // Filtro para evitar posts sem link de img e sem descricao
-      let filter = data.filter((item) => item.poster_path != null && item.overview !== '')
+      let filter = data.filter((item) => !!item.poster_path && item.overview !== '')
 
       results = filter.map((item, index) => {
         let genero = '',
@@ -356,12 +376,15 @@ module.exports = bot => {
           ano = item.release_date,
           linkImg = `${API_TMDB_BASE_IMG}${API_TMDB_TAM}${item.poster_path}`
 
-        if (item.release_date.match(/(\d{4})-\d{2}-\d{2}/mg)) {
+        if (item.release_date && item.release_date.match(/(\d{4})-\d{2}-\d{2}/mg)) {
 
           // regex para pegar data completa e substituir pelo ano
           let myRegex = /(\d{4})-\d{2}-\d{2}/
           ano = item.release_date.replace(myRegex, '$1')
+        } else {
+          ano = '0000'
         }
+        console.log('=>',item.release_date)
 
         // Remove quebra de linhas se houver
         if (descricao.match(/\r/img)) {
@@ -376,13 +399,13 @@ module.exports = bot => {
 
         // if - Definir se é anime
         // else if - Definir se é animacao
-        if (item.genre_ids.indexOf(16) !== -1 && item.original_language === 'ja') {
+        if (item.genre_ids.includes(16) && item.original_language === 'ja') {
           categoria = 'Anime'
-        } else if (item.genre_ids.indexOf(16) !== -1 && item.original_language !== 'ja') {
+        } else if (item.genre_ids.includes(16) && item.original_language !== 'ja') {
           categoria = 'Animação'
-        } else if (item.genre_ids.indexOf(99) !== -1) {
+        } else if (item.genre_ids.includes(99)) {
           categoria = 'Documentário'
-        } else if (item.genre_ids.length === 1 && item.genre_ids.indexOf(10402) !== -1) {
+        } else if (item.genre_ids.length === 1 && item.genre_ids.includes(10402)) {
           categoria = 'Show'
         } else {
           categoria = 'Filme'
@@ -440,8 +463,50 @@ module.exports = bot => {
       })
     }
 
-    // Resultado a ser exibido na tela pro usuário
+    if (lowQuality === true) {
+      for (let i = 0; i < results.length; i++) {
+        results[i].photo_url = results[i].photo_url.replace(/\/w500\//gmi, '/w300/')
+      }
+    }
+
     await ctx.answerInlineQuery(results)
     next()
+
+
+    function checkIfLastWordIsLegOrLow(arrayLeg, strInput, arrayLow = undefined) {
+
+      let str = strInput
+      let test = []
+      if (arrayLow) {
+        test = arrayLeg.concat(arrayLow)
+      } else {
+        test = [...arrayLeg]
+      }
+
+      if (!test.includes(str[str.length - 1])) {
+        return false
+      }
+
+      let legendado = false
+      let lowQuality = false
+
+      do {
+        if (arrayLeg.indexOf(str[str.length - 1].toLowerCase()) !== -1) {
+          legendado = true
+        } else {
+
+          if (str[str.length - 1].toLowerCase() === arrayLow) {
+            lowQuality = true
+          }
+        }
+        str.pop()
+      } while (test.includes(str[str.length - 1].toLowerCase()))
+
+      return {
+        legendado: legendado,
+        newLowQuality: lowQuality,
+        newArray: str
+      }
+    }
   })
 }

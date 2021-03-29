@@ -1,9 +1,10 @@
-.gitignore
-node_modules
 .env
 .env_testing
+.gitignore
+.eslintrc.json
+node_modules
 data.json
 data_copy.json
-.eslintrc.json
 practice.js
-.README.md
+.husky
+.vscode

@@ -1,15 +1,22 @@
 'use strict'
 require('dotenv').config()
-const { verificar, elapsedTime, getStartedTime } = require('./src/functions/functions')
+const {
+  verificar,
+  elapsedTime,
+  getStartedTime
+} = require('./src/functions/functions')
 const Telegraf = require('telegraf')
 const session = require('telegraf/session')
 const bot = new Telegraf(process.env.BOT_TOKEN)
+const CHANNEL_ID = process.env.CHANNEL_ID
+const MODO_ATIVO = process.env.MODO_ATIVO || 'oficial'
 
 bot.use(session())
 bot.use((ctx, next) => {
   getStartedTime()
   verificar(ctx, next)
 })
+
 
 const startCommand = require('./src/commands/start')
 startCommand(bot)
@@ -46,6 +53,9 @@ newpostCommand(bot)
 
 const newpostAction = require('./src/actions/newpost')
 newpostAction(bot)
+
+const linkToAroundPostsHandler = require('./src/handlers/linkToAroundPosts')
+linkToAroundPostsHandler(bot)
 
 const repostCommand = require('./src/commands/repost')
 repostCommand(bot)

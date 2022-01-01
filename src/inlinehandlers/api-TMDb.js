@@ -25,6 +25,9 @@ module.exports = bot => {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
 
+    // Encerrando a funcao caso o usuário não digite um texto na busca inline.
+    if(!nomeBusca) return;
+
     // if¹ - Busca de Séries
     // if² - Busca de Séries por temporada
     // if³ - Busca de Filmes

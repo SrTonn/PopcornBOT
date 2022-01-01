@@ -69,7 +69,6 @@ module.exports = bot => {
       // Filtro para evitar posts sem link da img e sem descrição vindas da API
       // let filter = data.filter((item) => !!item.poster_path &&
       //   item.overview !== '')
-      console.log('=>', filter)
       // Informações a serem gravadas temporariamente na memória
       // São complementos de dados que não vem na busca por ID
       let resFilter = filter.map((item) => {
@@ -384,7 +383,6 @@ module.exports = bot => {
         } else {
           ano = '0000'
         }
-        console.log('=>',item.release_date)
 
         // Remove quebra de linhas se houver
         if (descricao.match(/\r/img)) {
